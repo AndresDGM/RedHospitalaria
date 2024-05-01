@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="RedHospitalaria">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/RedHospitalaria.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
