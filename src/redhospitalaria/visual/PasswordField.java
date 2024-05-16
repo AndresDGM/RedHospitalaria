@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import javax.swing.JPasswordField;
+import javax.swing.border.EmptyBorder;
 
 public class PasswordField extends JPasswordField{
     
@@ -18,7 +19,7 @@ public class PasswordField extends JPasswordField{
         setSize(400, 40);
         setOpaque(false);
         setBackground(Util.color.brighter());
-        setBorder(null);
+        setBorder(new EmptyBorder(0, 5, 0, 5));
         getCaret().setVisible(false);
         setCaretColor(Color.white);
         for(int i = 0; i < 8; i++){

@@ -14,7 +14,7 @@ import javax.swing.JTextField;
 import raven.alerts.MessageAlerts;
 import raven.popup.component.PopupController;
 import redhospitalaria.modelo.Modelo;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Paciente;
 import redhospitalaria.visual.ComboBox;
 import redhospitalaria.visual.DateChooserDJRaven.DateChooser;
 import redhospitalaria.visual.GuiLogin;
@@ -30,6 +30,7 @@ public class LoginControl implements ActionListener {
     private float Counter2;
     private float Counter3;
     private boolean done = false;
+    private boolean continuar = true;
 
     public LoginControl(GuiLogin v, Modelo m, PrincipalControl mainControl) throws IOException {
         this.v = v;
@@ -223,17 +224,22 @@ public class LoginControl implements ActionListener {
                             .showMessage("Error",
                                     "Combinacion de usuario y contraseña incorrectos",
                                     MessageAlerts.MessageType.ERROR);
-                } else if (o instanceof Usuario usuario) {
+                } else if (o instanceof Paciente usuario) {
+                    mainControl.setUser(usuario);
+                    mainControl.setPerfil(usuario);
+                    mainControl.ocultarLogin();
+                    mainControl.mostrarCitas();
+                    mainControl.mostrarMenu();
+                    v.getSingUp().setDefault();
+                    v.getSingIn().setDefault();
                     MessageAlerts.getInstance()
                             .showMessage("Listo",
-                                    "Inicio de secion Exitoso",
-                                    MessageAlerts.MessageType.SUCCESS, MessageAlerts.OK_OPTION, (PopupController pc, int i) -> {
-                                        mainControl.setUser(usuario);
-                                        mainControl.setPerfil(usuario);
-                                        mainControl.ocultarLogin();
-                                        mainControl.mostrarCitas();
-                                        mainControl.mostrarMenu();
-                    });
+                                    "Inicio de secion Exitoso\nDesea ver sus notificaciones?",
+                                    MessageAlerts.MessageType.SUCCESS, MessageAlerts.YES_NO_OPTION, (pc, i) -> {
+                                        if(i == MessageAlerts.YES_OPTION){
+                                            mainControl.notificaciones();
+                                        }
+                                    });
                 }
             } catch (NullPointerException e) {
                 MessageAlerts
@@ -247,11 +253,12 @@ public class LoginControl implements ActionListener {
 
     private void singUpboton() throws IOException, ClassNotFoundException {
         if (botonCrearVal()) {
-            Usuario u = new Usuario(
+            Paciente u = new Paciente(
                     Integer.parseInt(v.getSingUp().getId().getText()),
                     v.getSingUp().getNombre().getText(),
+                    (String) v.getSingUp().getGenero().getSelectedItem(),
+                    (String) v.getSingUp().getEps().getSelectedItem(),
                     String.valueOf(v.getSingUp().getPassword().getPassword()),
-                    "Paciente",
                     v.getSingUp().getCorreo().getText(),
                     v.getSingUp().getFechatxt().getText(),
                     DateChooser.getToDay(),
@@ -271,6 +278,8 @@ public class LoginControl implements ActionListener {
                                         mainControl.ocultarLogin();
                                         mainControl.mostrarCitas();
                                         mainControl.mostrarMenu();
+                                        v.getSingUp().setDefault();
+                                        v.getSingIn().setDefault();
                     });
                 } else {
                     MessageAlerts.getInstance()
@@ -337,70 +346,72 @@ public class LoginControl implements ActionListener {
     private boolean botonSiguienteVal() throws IOException, ClassNotFoundException {
         boolean verificacion = true;
 
-        if (v.getSingUp().getMode() == 1) {
-            if (v.getSingUp().getNombre().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[0], "Por favor ingrese su nombre completo");
-            }
-
-            if (v.getSingUp().getFechatxt().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su fecha de nacimiento");
-            }
-
-            if (v.getSingUp().getId().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[2], "Por favor ingrese su cedula");
-            } else {
-                try {
-                    if (!(Boolean) mainControl.peticion("val:id:" + v.getSingUp().getId().getText())) {
-                        verificacion = false;
-                        showWarning(v.getSingUp().getWarnings()[2], "Por favor solo ingrese numeros");
-                    } else {
-                        try {
-                            if ((Boolean) mainControl.peticion("exits:" + v.getSingUp().getId().getText())) {
-                                verificacion = false;
-                                showWarning(v.getSingUp().getWarnings()[2], "Ya existe una cuenta con esa cedula");
-                            }
-                        } catch (NullPointerException e) {
-                            verificacion = false;
-                            MessageAlerts
-                                    .getInstance()
-                                    .showMessage("Error",
-                                            "No se pudo estableser coneccion con el servidor",
-                                            MessageAlerts.MessageType.ERROR);
-                        }
-                    }
-                } catch (NullPointerException e) {
+        switch (v.getSingUp().getMode()) {
+            case 1 -> {
+                if (v.getSingUp().getNombre().getText().isBlank()) {
                     verificacion = false;
-                    MessageAlerts
-                            .getInstance()
-                            .showMessage("Error",
-                                    "No se pudo estableser coneccion con el servidor",
-                                    MessageAlerts.MessageType.ERROR);
+                    showWarning(v.getSingUp().getWarnings()[0], "Por favor ingrese su nombre completo");
+                }   if (v.getSingUp().getFechatxt().getText().isBlank()) {
+                    verificacion = false;
+                    showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su fecha de nacimiento");
+                }   if (v.getSingUp().getId().getText().isBlank()) {
+                    verificacion = false;
+                    showWarning(v.getSingUp().getWarnings()[2], "Por favor ingrese su cedula");
+                } else {
+                    try {
+                        if (!(Boolean) mainControl.peticion("val:id:" + v.getSingUp().getId().getText())) {
+                            verificacion = false;
+                            showWarning(v.getSingUp().getWarnings()[2], "Por favor solo ingrese numeros");
+                        } else {
+                            try {
+                                if ((Boolean) mainControl.peticion("exits:" + v.getSingUp().getId().getText())) {
+                                    verificacion = false;
+                                    showWarning(v.getSingUp().getWarnings()[2], "Ya existe una cuenta con esa cedula");
+                                }
+                            } catch (NullPointerException e) {
+                                verificacion = false;
+                                MessageAlerts
+                                        .getInstance()
+                                        .showMessage("Error",
+                                                "No se pudo estableser coneccion con el servidor",
+                                                MessageAlerts.MessageType.ERROR);
+                            }
+                        }
+                    } catch (NullPointerException e) {
+                        verificacion = false;
+                        MessageAlerts
+                                .getInstance()
+                                .showMessage("Error",
+                                        "No se pudo estableser coneccion con el servidor",
+                                        MessageAlerts.MessageType.ERROR);
+                    }
                 }
             }
-        } else {
-            if(v.getSingUp().getDepar().getSelectedItem() != null){
-                if (v.getSingUp().getDepar().getSelectedItem().equals("Seleccionar")) {
+            case 2 -> {
+                if(v.getSingUp().getDepar().getSelectedItem() == null || v.getSingUp().getDepar().getSelectedItem().equals("Seleccionar")){
                     verificacion = false;
                     showWarning(v.getSingUp().getWarnings()[0], "Por favor ingrese su departamento");
+                }   if (v.getSingUp().getMuni().getItemCount() == 0) {
+                    verificacion = false;
+                    showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su municipio");
+                } else if (v.getSingUp().getMuni().getSelectedItem().equals("Seleccionar")) {
+                    verificacion = false;
+                    showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su municipio");
+                }   if (v.getSingUp().getDireccion().getText().isBlank()) {
+                    verificacion = false;
+                    showWarning(v.getSingUp().getWarnings()[2], "Por favor ingrese su direccion");
                 }
-            }else{
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[0], "Por favor ingrese su departamento");
             }
-            if (v.getSingUp().getMuni().getItemCount() == 0) {
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su municipio");
-            } else if (v.getSingUp().getMuni().getSelectedItem().equals("Seleccionar")) {
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su municipio");
-            }
-
-            if (v.getSingUp().getDireccion().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getSingUp().getWarnings()[2], "Por favor ingrese su direccion");
+            case 3 -> {
+                if(v.getSingUp().getGenero().getSelectedItem() == null)
+                    showWarning(v.getSingUp().getWarnings()[0], "Por favor ingrese su genero");
+                if(v.getSingUp().getEps().getSelectedItem() == null)
+                    showWarning(v.getSingUp().getWarnings()[1], "Por favor ingrese su eps");
+                if(v.getSingUp().getEspecializacion().getSelectedItem() == null)
+                    showWarning(v.getSingUp().getWarnings()[2], "Por favor ingrese la especializacion");
+                verificacion = v.getSingUp().getGenero().getSelectedItem() != null &&
+                        v.getSingUp().getEps().getSelectedItem() != null &&
+                        v.getSingUp().getEspecializacion().getSelectedItem() != null;
             }
         }
         return verificacion;

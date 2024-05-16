@@ -13,6 +13,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -36,13 +37,12 @@ import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 public class ComboUI extends BasicComboBoxUI {
 
     private Color color = Util.color.brighter();
-    
+
     private float alpha = 1f;
 
     @Override
     public void installUI(JComponent c) {
         super.installUI(c);
-        Border border = new Border();
         JTextField txt = (JTextField) comboBox.getEditor().getEditorComponent();
         txt.addFocusListener(new FocusAdapter() {
             @Override
@@ -52,7 +52,7 @@ public class ComboUI extends BasicComboBoxUI {
         });
         txt.setOpaque(false);
         txt.setForeground(Color.white);
-        txt.setBorder(new EmptyBorder(0,4,0,4));
+        txt.setBorder(new EmptyBorder(0, 4, 0, 4));
         comboBox.addPopupMenuListener(new PopupMenuListener() {
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -69,9 +69,11 @@ public class ComboUI extends BasicComboBoxUI {
                 arrowButton.setBackground(Util.color.darker());
             }
         });
+        
         AutoCompleteDecorator.decorate(comboBox);
         comboBox.setBackground(color);
-        comboBox.setBorder(border);
+        comboBox.setBorder(BorderFactory.createEmptyBorder());
+        comboBox.setOpaque(false);
     }
 
     @Override
@@ -101,12 +103,11 @@ public class ComboUI extends BasicComboBoxUI {
                 }
                 return label;
             }
-
         };
     }
 
     @Override
-    public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
+    public void paintCurrentValueBackground(Graphics g, Rectangle b, boolean hasFocus) {
     }
 
     private class ArrowButton extends JButton {
@@ -136,7 +137,8 @@ public class ComboUI extends BasicComboBoxUI {
 
         public ItemPopup(JComboBox combo) {
             super(combo);
-            setBorder(null);
+            setBounds(1, 1, combo.getWidth() - 2, combo.getHeight() - 2);
+            setBorder(BorderFactory.createEmptyBorder());
         }
 
         @Override
@@ -149,42 +151,9 @@ public class ComboUI extends BasicComboBoxUI {
             scroll.setVerticalScrollBar(sb);
             return scroll;
         }
+        
     }
-
-    private class Border extends EmptyBorder {
-
-        private Color focuscolor = new Color(65, 150, 240);
-        private Color color = new Color(128, 128, 128);
-
-        public Border(int border) {
-            super(border, border, border, border);
-        }
-
-        public Border() {
-            this(5);
-        }
-
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        }
-
-        public Color getFocuscolor() {
-            return focuscolor;
-        }
-
-        public void setFocuscolor(Color focuscolor) {
-            this.focuscolor = focuscolor;
-        }
-
-        public Color getColor() {
-            return color;
-        }
-
-        public void setColor(Color color) {
-            this.color = color;
-        }
-    }
-
+    
     public Color getColor() {
         return color;
     }
@@ -200,6 +169,12 @@ public class ComboUI extends BasicComboBoxUI {
     public void setAlpha(float alpha) {
         this.alpha = alpha;
     }
-    
-    
+
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setColor(c.getBackground());
+        g2.fillRoundRect(1, 1, c.getWidth() - 2, c.getHeight() - 2, 5, 5);
+        super.paint(g, c);
+    }
 }

@@ -6,8 +6,9 @@ package redhospitalaria.controlador;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import raven.alerts.MessageAlerts;
 import redhospitalaria.modelo.Modelo;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Paciente;
 import redhospitalaria.visual.BasicButton;
 import redhospitalaria.visual.DrawerMenu;
 import redhospitalaria.visual.Util;
@@ -17,12 +18,12 @@ import redhospitalaria.visual.Util;
  * @author david
  */
 public class DrawerControl implements ActionListener{
-    private Usuario user;
+    private Paciente user;
     private DrawerMenu dm;
     private Modelo m;
     private PrincipalControl mainControl;
 
-    public DrawerControl(Usuario user, DrawerMenu dm, Modelo m, PrincipalControl mainControl) {
+    public DrawerControl(Paciente user, DrawerMenu dm, Modelo m, PrincipalControl mainControl) {
         this.user = user;
         this.dm = dm;
         this.m = m;
@@ -49,6 +50,25 @@ public class DrawerControl implements ActionListener{
         }
         if(e.getSource() == dm.getcButtons()[5]){
             botonEliminarFunc();
+        }
+        if(e.getSource() == dm.getcButtons()[6]){
+            if(mainControl.actualizar()){
+                MessageAlerts.getInstance().
+                    showMessage("Actualizar",
+                            "Su informacion a sido Actualizada correctamente",
+                            MessageAlerts.MessageType.SUCCESS);
+            }
+        }
+        if(e.getSource() == dm.getcButtons()[7]){
+            if((Boolean) mainControl.peticion("exits:"+ user.getCedula())){
+                mainControl.notificaciones();
+            }else{
+                MessageAlerts.getInstance().showMessage("Lo lamentamos",
+                    "Al parecer ya no te encuentras en nuestra base de datos",
+                    MessageAlerts.MessageType.ERROR);
+                mainControl.logOut();
+            }
+            
         }
     }
     
@@ -136,4 +156,14 @@ public class DrawerControl implements ActionListener{
             b.addActionListener(this);
         }
     }
+
+    public Paciente getUser() {
+        return user;
+    }
+
+    public void setUser(Paciente user) {
+        this.user = user;
+    }
+    
+    
 }

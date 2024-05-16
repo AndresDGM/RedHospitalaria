@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 public class TextField extends JTextField{
     String tooltip = "";
@@ -17,7 +18,7 @@ public class TextField extends JTextField{
         setSize(400, 40);
         setOpaque(false);
         setBackground(Util.color.brighter());
-        setBorder(null);
+        setBorder(new EmptyBorder(0, 5, 0, 5));
         getCaret().setVisible(false);
         setCaretColor(Color.white);
     }

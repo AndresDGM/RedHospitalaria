@@ -23,4 +23,9 @@ public class GuiLogin extends JPanel {
     public SingUp getSingUp() {
         return singUp;
     }
+    
+    public void setDefault(){
+        singIn.setDefault();
+        singUp.setDefault();
+    }
 }

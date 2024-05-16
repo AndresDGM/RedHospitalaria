@@ -32,7 +32,6 @@ public class SingIn extends JPanel {
     private JLabel msgS2;
     private JLabel msgS3;
     private JLabel passLabel;
-    private JButton forgotPass;
     private JLabel idLabel;
     private BasicButton botonSingIn;
     private BasicButton botonSingInMode;
@@ -95,30 +94,6 @@ public class SingIn extends JPanel {
         botonSingIn.getTextF().setVerticalAlignment(JTextField.CENTER);
         botonSingIn.setColor(new Color(65, 150, 240));
 
-        forgotPass = new JButton("Olvido su contraseña?");
-        forgotPass.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                getForgotPass().setForeground(new Color(100, 100, 244));
-                getForgotPass().setCursor(new Cursor(Cursor.HAND_CURSOR));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                getForgotPass().setForeground(Color.white);
-            }
-        });
-        forgotPass.setContentAreaFilled(false);
-        forgotPass.setBorder(null);
-        forgotPass.setFocusPainted(false);
-        forgotPass.setBounds(395, 350, 130, 15);
-        forgotPass.setFont(new Font("Arial", Font.BOLD, 12));
-        forgotPass.setHorizontalAlignment(JLabel.LEFT);
-        forgotPass.setVerticalAlignment(JLabel.CENTER);
-        forgotPass.setForeground(Color.WHITE);
-        forgotPass.addActionListener((e) -> {
-            MessageAlerts.getInstance().showMessage("SEX!!!", "You are having fucking sex with susamongus!!!", MessageAlerts.MessageType.SUCCESS);
-        });
         botonSingInMode = new BasicButton(140, 50, "Iniciar secion");
         botonSingInMode.setLocation(105, 450);
         botonSingInMode.getTextF().setFont(new Font("Arial", Font.PLAIN, 18));
@@ -136,8 +111,7 @@ public class SingIn extends JPanel {
         warnings[1].setFont(new Font("Arial", Font.PLAIN, 16));
         warnings[1].setVisible(false);
         add(botonSingInMode);
-        add(getBotonSingIn());
-        add(getForgotPass());
+        add(botonSingIn);
         add(idLabel);
         add(getId());
         add(passLabel);
@@ -168,7 +142,7 @@ public class SingIn extends JPanel {
     }
 
     public ArrayList<Component> getComps1() {
-        return new ArrayList<>(Arrays.asList(msgS1, getId(), idLabel, password, passLabel, getBotonSingIn(), getForgotPass()));
+        return new ArrayList<>(Arrays.asList(msgS1, getId(), idLabel, password, passLabel, getBotonSingIn()));
     }
 
     public ArrayList<Component> getComps2() {
@@ -183,11 +157,7 @@ public class SingIn extends JPanel {
         getId().setText("");
         password.setText("");
     }
-    
-    public JButton getForgotPass() {
-        return forgotPass;
-    }
-
+   
     public BasicButton getBotonSingIn() {
         return botonSingIn;
     }

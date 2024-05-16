@@ -10,12 +10,12 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JLabel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
 import raven.alerts.MessageAlerts;
 import raven.popup.component.PopupCallbackAction;
 import raven.popup.component.PopupController;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Administrador;
+import redhospitalaria.modelo.Doctor;
+import redhospitalaria.modelo.Paciente;
 import redhospitalaria.visual.CrearUsusario;
 import redhospitalaria.visual.DateChooserDJRaven.DateChooser;
 
@@ -23,9 +23,9 @@ public class CrearControl implements ActionListener {
 
     private CrearUsusario v;
     private PrincipalControl mainControl;
-    private Usuario user;
+    private Paciente user;
 
-    public CrearControl(CrearUsusario v, PrincipalControl mainControl, Usuario user) {
+    public CrearControl(CrearUsusario v, PrincipalControl mainControl, Paciente user) {
         this.v = v;
         this.mainControl = mainControl;
         this.user = user;
@@ -38,12 +38,38 @@ public class CrearControl implements ActionListener {
             try {
                 if (botonSiguienteVal()) {
                     v.getCrearGui().changeVisible(v.getCrearGui().getMode() + 1);
+                    switch (v.getCrearGui().getMode()) {
+                        case 2 -> v.getCombo().setEnabled(false);
+                        case 3 -> {
+                            if(((String) v.getCombo().getSelectedItem()).equals("Doctor")){
+                                v.getCrearGui().getEspecializacion().setVisible(true);
+                                v.getCrearGui().getEspecializacionLabel().setVisible(true);
+                            }
+                        }
+                        case 4 -> {
+                            v.getCrearGui().getEspecializacion().setVisible(false);
+                            v.getCrearGui().getEspecializacionLabel().setVisible(false);
+                        }
+                    }
                 }
             } catch (IOException | ClassNotFoundException ex) {
             }
         }
         if (e.getSource() == v.getCrearGui().getBotonAtras() && v.getCrearGui().getBotonAtras().isFocusable()) {
             v.getCrearGui().changeVisible(v.getCrearGui().getMode() - 1);
+            switch (v.getCrearGui().getMode()) {
+                case 1 -> v.getCombo().setEnabled(true);
+                case 2 -> {
+                    v.getCrearGui().getEspecializacion().setVisible(false);
+                    v.getCrearGui().getEspecializacionLabel().setVisible(false);
+                }
+                case 3 -> {
+                    if(((String) v.getCombo().getSelectedItem()).equals("Doctor")){
+                        v.getCrearGui().getEspecializacion().setVisible(true);
+                        v.getCrearGui().getEspecializacionLabel().setVisible(true);
+                    }
+                }
+            }
         }
         if (e.getSource() == v.getCrearGui().getFechaBoton() && v.getCrearGui().getFechaBoton().isFocusable()) {
             v.getCrearGui().getFecha().showPopup();
@@ -69,18 +95,25 @@ public class CrearControl implements ActionListener {
 
     private void singUpboton() throws IOException, ClassNotFoundException {
         if (botonCrearVal()) {
-            Usuario u = new Usuario(
-                    Integer.parseInt(v.getCrearGui().getId().getText()),
-                    v.getCrearGui().getNombre().getText(),
-                    String.valueOf(v.getCrearGui().getPassword().getPassword()),
-                    (String) v.getCombo().getSelectedItem(),
-                    v.getCrearGui().getCorreo().getText(),
-                    v.getCrearGui().getFechatxt().getText(),
-                    DateChooser.getToDay(),
-                    (String) v.getCrearGui().getDepar().getSelectedItem(),
-                    (String) v.getCrearGui().getMuni().getSelectedItem(),
-                    v.getCrearGui().getDireccion().getText()
-            );
+            Paciente u = new Paciente(
+                            Integer.parseInt(v.getCrearGui().getId().getText()),
+                            v.getCrearGui().getNombre().getText(),
+                            (String) v.getCrearGui().getGenero().getSelectedItem(),
+                            (String) v.getCrearGui().getEps().getSelectedItem(),
+                            String.valueOf(v.getCrearGui().getPassword().getPassword()),
+                            v.getCrearGui().getCorreo().getText(),
+                            v.getCrearGui().getFechatxt().getText(),
+                            DateChooser.getToDay(),
+                            (String) v.getCrearGui().getDepar().getSelectedItem(),
+                            (String) v.getCrearGui().getMuni().getSelectedItem(),
+                            v.getCrearGui().getDireccion().getText()
+                    );
+            switch ((String) v.getCombo().getSelectedItem()) {
+                case "Doctor" ->
+                    u = new Doctor(u, (String) v.getCrearGui().getEspecializacion().getSelectedItem());
+                case "Administrador" ->
+                    u = new Administrador(u);
+            }
             try {
                 Boolean b = (Boolean) mainControl.peticion("create", u);
                 if (b) {
@@ -116,69 +149,72 @@ public class CrearControl implements ActionListener {
     private boolean botonSiguienteVal() throws IOException, ClassNotFoundException {
         boolean verificacion = true;
 
-        if (v.getCrearGui().getMode() == 1) {
-            if (v.getCrearGui().getNombre().getText().equals("Ingrese su nombre completo")
-                    || v.getCrearGui().getNombre().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[0], "Por favor ingrese su nombre completo");
-            }
-
-            if (v.getCrearGui().getFechatxt().getText().equals(v.getCrearGui().getFecha().getDateFormat())
-                    || v.getCrearGui().getFechatxt().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su fecha de nacimiento");
-            }
-
-            if (v.getCrearGui().getId().getText().equals("Ingrese su cedula sin puntos ni comas") || v.getCrearGui().getId().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[2], "Por favor ingrese su cedula");
-            } else {
-                try {
-                    if (!(Boolean) mainControl.peticion("val:id:" + v.getCrearGui().getId().getText())) {
-                        verificacion = false;
-                        showWarning(v.getCrearGui().getWarnings()[2], "Por favor solo ingrese numeros");
-                    } else {
-                        try {
-                            if ((Boolean) mainControl.peticion("exits:" + v.getCrearGui().getId().getText())) {
-                                verificacion = false;
-                                showWarning(v.getCrearGui().getWarnings()[2], "Ya existe una cuenta con esa cedula");
-                            }
-                        } catch (NullPointerException e) {
-                            verificacion = false;
-                            MessageAlerts
-                                    .getInstance()
-                                    .showMessage("Error",
-                                            "No se pudo estableser coneccion con el servidor",
-                                            MessageAlerts.MessageType.ERROR);
-                        }
-                    }
-                } catch (NullPointerException e) {
+        switch (v.getCrearGui().getMode()) {
+            case 1 -> {
+                if (v.getCrearGui().getNombre().getText().isBlank()) {
                     verificacion = false;
-                    MessageAlerts
-                            .getInstance()
-                            .showMessage("Error",
-                                    "No se pudo estableser coneccion con el servidor",
-                                    MessageAlerts.MessageType.ERROR);
+                    showWarning(v.getCrearGui().getWarnings()[0], "Por favor ingrese su nombre completo");
+                }   if (v.getCrearGui().getFechatxt().getText().isBlank()) {
+                    verificacion = false;
+                    showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su fecha de nacimiento");
+                }   if (v.getCrearGui().getId().getText().isBlank()) {
+                    verificacion = false;
+                    showWarning(v.getCrearGui().getWarnings()[2], "Por favor ingrese su cedula");
+                } else {
+                    try {
+                        if (!(Boolean) mainControl.peticion("val:id:" + v.getCrearGui().getId().getText())) {
+                            verificacion = false;
+                            showWarning(v.getCrearGui().getWarnings()[2], "Por favor solo ingrese numeros");
+                        } else {
+                            try {
+                                if ((Boolean) mainControl.peticion("exits:" + v.getCrearGui().getId().getText())) {
+                                    verificacion = false;
+                                    showWarning(v.getCrearGui().getWarnings()[2], "Ya existe una cuenta con esa cedula");
+                                }
+                            } catch (NullPointerException e) {
+                                verificacion = false;
+                                MessageAlerts
+                                        .getInstance()
+                                        .showMessage("Error",
+                                                "No se pudo estableser coneccion con el servidor",
+                                                MessageAlerts.MessageType.ERROR);
+                            }
+                        }
+                    } catch (NullPointerException e) {
+                        verificacion = false;
+                        MessageAlerts
+                                .getInstance()
+                                .showMessage("Error",
+                                        "No se pudo estableser coneccion con el servidor",
+                                        MessageAlerts.MessageType.ERROR);
+                    }
                 }
             }
-        } else {
-            if (v.getCrearGui().getDepar().getSelectedItem().equals("Seleccionar")) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[0], "Por favor ingrese su departamento");
+            case 2 -> {
+                if(v.getCrearGui().getDepar().getSelectedItem() == null || v.getCrearGui().getDepar().getSelectedItem().equals("Seleccionar")){
+                    verificacion = false;
+                    showWarning(v.getCrearGui().getWarnings()[0], "Por favor ingrese su departamento");
+                }   if (v.getCrearGui().getMuni().getItemCount() == 0) {
+                    verificacion = false;
+                    showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su municipio");
+                } else if (v.getCrearGui().getMuni().getSelectedItem().equals("Seleccionar")) {
+                    verificacion = false;
+                    showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su municipio");
+                }   if (v.getCrearGui().getDireccion().getText().isBlank()) {
+                    verificacion = false;
+                    showWarning(v.getCrearGui().getWarnings()[2], "Por favor ingrese su direccion");
+                }
             }
-
-            if (v.getCrearGui().getMuni().getItemCount() == 0) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su municipio");
-            } else if (v.getCrearGui().getMuni().getSelectedItem().equals("Seleccionar")) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su municipio");
-            }
-
-            if (v.getCrearGui().getDireccion().getText().equals("Tu direccion")
-                    || v.getCrearGui().getDireccion().getText().isBlank()) {
-                verificacion = false;
-                showWarning(v.getCrearGui().getWarnings()[2], "Por favor ingrese su direccion");
+            case 3 -> {
+                if(v.getCrearGui().getGenero().getSelectedItem() == null)
+                    showWarning(v.getCrearGui().getWarnings()[0], "Por favor ingrese su genero");
+                if(v.getCrearGui().getEps().getSelectedItem() == null)
+                    showWarning(v.getCrearGui().getWarnings()[1], "Por favor ingrese su eps");
+                if(v.getCrearGui().getEspecializacion().getSelectedItem() == null)
+                    showWarning(v.getCrearGui().getWarnings()[2], "Por favor ingrese la especializacion");
+                verificacion = v.getCrearGui().getGenero().getSelectedItem() != null &&
+                        v.getCrearGui().getEps().getSelectedItem() != null &&
+                        v.getCrearGui().getEspecializacion().getSelectedItem() != null;
             }
         }
         return verificacion;
@@ -187,8 +223,7 @@ public class CrearControl implements ActionListener {
     private boolean botonCrearVal() throws IOException, ClassNotFoundException {
         boolean verificacion = true;
 
-        if (v.getCrearGui().getCorreo().getText()
-                .equals("example@mail.com") || v.getCrearGui().getCorreo().getText().isBlank()) {
+        if (v.getCrearGui().getCorreo().getText().isBlank()) {
             verificacion = false;
             showWarning(v.getCrearGui().getWarnings()[0], "Por favor ingrese su correo electronico");
         } else {
@@ -247,15 +282,6 @@ public class CrearControl implements ActionListener {
                                 "No se pudo estableser coneccion con el servidor",
                                 MessageAlerts.MessageType.ERROR);
             }
-        }
-
-        if (v.getCombo().getSelectedItem().equals("Seleccionar")) {
-            verificacion = false;
-            MessageAlerts
-                    .getInstance()
-                    .showMessage("Tipo de Usuario",
-                            "Seleccione que tipo de usuario desea crear",
-                            MessageAlerts.MessageType.WARNING);
         }
         return verificacion;
     }

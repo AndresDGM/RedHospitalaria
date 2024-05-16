@@ -1,15 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package redhospitalaria.controlador;
 
-import java.awt.Component;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import raven.alerts.MessageAlerts;
+import redhospitalaria.modelo.Administrador;
+import redhospitalaria.modelo.Doctor;
 import redhospitalaria.modelo.Modelo;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Paciente;
 import redhospitalaria.visual.BasicButton;
 import redhospitalaria.visual.BuscarGui;
 
@@ -19,17 +17,24 @@ import redhospitalaria.visual.BuscarGui;
  */
 public class EliminarControl implements ActionListener{
     
-    private Usuario user;
+    private Paciente user;
     private BuscarGui bg;
     private Modelo m;
     private PrincipalControl mainControl;
     private BasicButton bEliminar;
 
-    public EliminarControl(Usuario user, BuscarGui bg, Modelo m, PrincipalControl mainControl) {
+    public EliminarControl(Paciente user, BuscarGui bg, Modelo m, PrincipalControl mainControl) {
         this.user = user;
         this.bg = bg;
         this.m = m;
         this.mainControl = mainControl;
+        bEliminar = new BasicButton();
+        bEliminar.setSize(30, 30);
+        bEliminar.setLocation(bg.getBoton().getX() + 35, 50);
+        bEliminar.setColor(new Color(235,15,60));
+        bEliminar.setIcon("src/images/ClarityRemoveSolid.png");
+        bg.add(bEliminar, 3);
+        bg.getPg().getModificar().setVisible(false);
         addListeners();
     }
 
@@ -44,22 +49,26 @@ public class EliminarControl implements ActionListener{
     
     private void addListeners(){
         bg.getBoton().addActionListener(this);
-        for (Component c : bg.getComponents()) {
-            if(c instanceof BasicButton){
-                if(((BasicButton) c).getTextF().getText().equals("Eliminar")){
-                    bEliminar = (BasicButton) c;
-                    bEliminar.addActionListener(this);
-                }
-            }
-        }
+        bEliminar.addActionListener(this);
     }
     
     private void botonBuscar(){
         try {
-            if ((Boolean) mainControl.peticion("val:id:" + bg.getBuscar().getText())) {
+            if (!bg.getBuscar().getText().isBlank() && (Boolean) mainControl.peticion("val:id:" + bg.getBuscar().getText())) {
                 Object o = mainControl.peticion("get:" + bg.getBuscar().getText());
-                if (o.getClass() == Usuario.class) {
-                    bg.setInfo((Usuario) o);
+                if (o.getClass() == Paciente.class ||
+                        o.getClass() == Doctor.class ||
+                        o.getClass() == Administrador.class) {
+                    Paciente u = (Paciente) o;
+                    bg.setInfo(u);
+                    bEliminar.setVisible(true);
+                    if(u.equals(user)){
+                        MessageAlerts
+                                .getInstance()
+                                .showMessage("El perfil",
+                                        "Tu propia imformacion este en el perfil en todo momento",
+                                        MessageAlerts.MessageType.DEFAULT);
+                    }
                 } else {
                     MessageAlerts
                             .getInstance()
@@ -85,21 +94,31 @@ public class EliminarControl implements ActionListener{
     
     private void botonEliminar(){
         try {
-            if ((Boolean) mainControl.peticion("val:id:" + bg.getBuscar().getText())) {
-                Object o = mainControl.peticion("delete:" + bg.getBuscar().getText());
-                if (o.getClass() == Usuario.class) {
+            if (!bg.getBuscar().getText().isBlank() && (Boolean) mainControl.peticion("val:id:" + bg.getBuscar().getText())) {
+                if(Long.parseLong(bg.getBuscar().getText()) != user.getCedula()){
+                    Object o = mainControl.peticion("delete:" + bg.getBuscar().getText());
+                    if (o.getClass() == Paciente.class ||
+                            o.getClass() == Doctor.class ||
+                            o.getClass() == Administrador.class) {
+                        MessageAlerts
+                                .getInstance()
+                                .showMessage("Se ha borrado correctamente ha:",
+                                        "Nombre: " + ((Paciente) o).getNombre() + "\n" +
+                                        "Cedula: " + ((Paciente) o).getCedula(),
+                                        MessageAlerts.MessageType.SUCCESS);
+                    } else {
+                        MessageAlerts
+                                .getInstance()
+                                .showMessage("Fallida",
+                                        "No se encontro o no existe el usuario buscado",
+                                        MessageAlerts.MessageType.WARNING);
+                    }
+                }else{
                     MessageAlerts
-                            .getInstance()
-                            .showMessage("Se ha borrado correctamente ha:",
-                                    "Nombre: " + ((Usuario) o).getNombre() + "\n" +
-                                    "Cedula: " + ((Usuario) o).getCedula(),
-                                    MessageAlerts.MessageType.SUCCESS);
-                } else {
-                    MessageAlerts
-                            .getInstance()
-                            .showMessage("Fallida",
-                                    "No se encontro o no existe el usuario buscado",
-                                    MessageAlerts.MessageType.WARNING);
+                                .getInstance()
+                                .showMessage("Cuidado",
+                                        "No te puedes eliminar a ti mismo",
+                                        MessageAlerts.MessageType.WARNING);
                 }
             } else {
                 MessageAlerts
@@ -115,5 +134,9 @@ public class EliminarControl implements ActionListener{
                             "No se pudo conectar al servidor",
                             MessageAlerts.MessageType.ERROR);
         }
+    }
+
+    public void setUser(Paciente user) {
+        this.user = user;
     }
 }

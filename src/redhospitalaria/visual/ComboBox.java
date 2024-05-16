@@ -10,7 +10,7 @@ import javax.swing.JComboBox;
  *
  * @author david
  */
-public class ComboBox<E> extends JComboBox<E>{
+public class ComboBox<E> extends JComboBox<E> {
 
     ComboUI cbUI = new ComboUI();
     public ComboBox() {

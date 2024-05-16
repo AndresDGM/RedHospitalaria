@@ -33,7 +33,7 @@ public class CrearUsusario extends JPanel {
         crearGui.getMsgS2().setVisible(false);
         crearGui.getMsgS3().setVisible(false);
         crearGui.getBotonSingUpMode().setVisible(false);
-        combo = new ComboBox<>(new String[]{"Seleccionar", "Paciente", "Doctor", "Administrador"});
+        combo = new ComboBox<>(new String[]{"Paciente", "Doctor", "Administrador"});
         combo.setBounds(getWidth() / 2 - 100, 70, 200, 30);
         title = new JLabel("Crear");
         title.setBounds(getWidth() / 2 - 50, 10, 100, 40);
@@ -61,4 +61,9 @@ public class CrearUsusario extends JPanel {
     public void setCombo(ComboBox<String> combo) {
         this.combo = combo;
     }    
+    
+    public void setDefault(){
+        crearGui.setDefault();
+        combo.setSelectedIndex(0);
+    }
 }

@@ -6,11 +6,11 @@ package redhospitalaria.controlador;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import raven.alerts.MessageAlerts;
+import redhospitalaria.modelo.Administrador;
+import redhospitalaria.modelo.Doctor;
 import redhospitalaria.modelo.Modelo;
-import redhospitalaria.modelo.UserSocket;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Paciente;
 import redhospitalaria.visual.BuscarGui;
 
 /**
@@ -19,26 +19,38 @@ import redhospitalaria.visual.BuscarGui;
  */
 public class BuscarControl implements ActionListener {
 
-    private Usuario user;
+    private Paciente user;
     private BuscarGui bg;
     private Modelo m;
     private PrincipalControl mainControl;
-
-    public BuscarControl(Usuario user, BuscarGui bg, Modelo m, PrincipalControl mainControl) {
+    private ModificarControl modificarControl;
+    public BuscarControl(Paciente user, BuscarGui bg, Modelo m, PrincipalControl mainControl) {
         this.user = user;
         this.bg = bg;
         this.m = m;
         this.mainControl = mainControl;
         bg.getBoton().addActionListener(this);
+        modificarControl = new ModificarControl(user, bg.getPg(), mainControl);
+        bg.getPg().getModificar().setVisible(false);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            if ((Boolean) mainControl.peticion("val:id:" + bg.getBuscar().getText())) {
+            if (!bg.getBuscar().getText().isBlank() && (Boolean) mainControl.peticion("val:id:" + bg.getBuscar().getText())) {
                 Object o = mainControl.peticion("get:" + bg.getBuscar().getText());
-                if (o.getClass() == Usuario.class) {
-                    bg.setInfo((Usuario) o);
+                if (o.getClass() == Paciente.class ||
+                        o.getClass() == Doctor.class ||
+                        o.getClass() == Administrador.class) {
+                    Paciente u = (Paciente) o;
+                    bg.setInfo(u);
+                    if(user.getClass() == Doctor.class && u.getClass() == Paciente.class ||
+                            user.getClass() == Administrador.class){
+                        modificarControl.setUser(u);
+                        bg.getPg().getModificar().setVisible(true);
+                    }else{
+                        bg.getPg().getModificar().setVisible(false);
+                    }
                 } else {
                     MessageAlerts
                             .getInstance()
@@ -61,4 +73,10 @@ public class BuscarControl implements ActionListener {
                             MessageAlerts.MessageType.ERROR);
         }
     }
+
+    public void setUser(Paciente user) {
+        this.user = user;
+        modificarControl.setUser(user);
+    }
+    
 }

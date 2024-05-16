@@ -1,26 +1,33 @@
 package redhospitalaria.modelo;
 
-public class Cita {
-    private String doctor, fecha, hora, sede, razon;
-    private int urgencia;
+import java.io.Serializable;
+import redhospitalaria.visual.Util;
 
-    public Cita(String doctor, String fecha, String hora, String sede, String razon, int urgencia) {
+public class Cita implements Serializable{
+    
+    private String fecha, sede, razon, area;
+    private int urgencia;
+    private Doctor doctor;
+    private Paciente paciente;
+    
+    public Cita(Doctor doctor, Paciente paciente, String fecha, String sede, String area, String razon, int urgencia) {
         this.doctor = doctor;
+        this.paciente = paciente;
         this.fecha = fecha;
-        this.hora = hora;
         this.sede = sede;
         this.razon = razon;
+        this.area = area;
         this.urgencia = urgencia;
     }
 
     public Cita() {
     }
 
-    public String getDoctor() {
+    public Doctor getDoctor() {
         return doctor;
     }
 
-    public void setDoctor(String doctor) {
+    public void setDoctor(Doctor doctor) {
         this.doctor = doctor;
     }
 
@@ -30,14 +37,6 @@ public class Cita {
 
     public void setFecha(String fecha) {
         this.fecha = fecha;
-    }
-
-    public String getHora() {
-        return hora;
-    }
-
-    public void setHora(String hora) {
-        this.hora = hora;
     }
 
     public String getSede() {
@@ -62,5 +61,67 @@ public class Cita {
 
     public void getUrgencia(int urgencia) {
         this.urgencia = urgencia;
+    }
+
+    public Paciente getPaciente() {
+        return paciente;
+    }
+
+    public void setPaciente(Paciente paciente) {
+        this.paciente = paciente;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+    
+    public String[] getData(Paciente p){
+        if(p.getClass() == Doctor.class){
+            return new String[]{paciente.getNombre(),
+                String.valueOf(paciente.getCedula()),
+                doctor.getMunicipio(),
+                Util.urgencias[urgencia],
+                area,
+                fecha,
+                razon
+            };
+        }else{
+            return new String[]{doctor.getNombre(),
+                String.valueOf(doctor.getCedula()),
+                doctor.getEspecializacion(),
+                doctor.getMunicipio(),
+                Util.urgencias[urgencia],
+                area,
+                fecha,
+                razon
+            };
+        }
+    }
+    
+    public String[] getDataName(Paciente p){
+        if(p.getClass() == Doctor.class){
+            return new String[]{"Nombre",
+                "Cedula",
+                "Sede",
+                "Urgencia",
+                "Area",
+                "Fecha",
+                "Razon"
+            };
+        }else{
+            return new String[]{"Nombre",
+                "Cedula",
+                "Especializacion",
+                "Sede",
+                "Urgencia",
+                "Area",
+                "Fecha",
+                "Razon"
+            };
+        }
     }
 }

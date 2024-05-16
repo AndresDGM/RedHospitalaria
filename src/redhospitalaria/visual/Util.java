@@ -6,7 +6,16 @@ package redhospitalaria.visual;
 
 import java.awt.Color;
 import java.awt.Image;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
+import redhospitalaria.modelo.Cita;
+import redhospitalaria.modelo.Paciente;
 
 public class Util {
 
@@ -19,6 +28,10 @@ public class Util {
                 imagen.getImage().getScaledInstance((int) (imagen.getIconWidth() * scale),
                         (int) (imagen.getIconHeight() * scale), Image.SCALE_DEFAULT));
     }
+    
+    public static String[] epsItems = {"Emssanar", "Sanitas", "SOS", "salud total", "Sura"};
+    
+    public static String[] generos = {"Mujer", "Hombre", "Otro"};
 
     public static String[] nombresPruebaDoc = {
         "Juan Pérez",
@@ -355,4 +368,86 @@ public class Util {
         "Avenida 12 #17-20",
         "Calle 55 #21-28"
     };
+    
+    public static String[] urgencias = {
+            "Resucitacion",
+            "Emergencia",
+            "Urgencia",
+            "Urgencia menor",
+            "Sin Urgencia"
+        };
+    
+    public final static int TRIAGE_I = 0;
+    public final static int TRIAGE_II = 1;
+    public final static int TRIAGE_III = 2;
+    public final static int TRIAGE_IV = 3;
+    public final static int TRIAGE_V = 4;
+    
+    public static String[] areas = {
+        "Cardiología",
+        "Dermatología",
+        "Neurología",
+        "Oftalmología",
+        "Ginecología",
+        "Urologia",
+        "Pediatría",
+        "Cirugía General",
+        "Psiquiatría",
+        "Medicina Interna",
+        "Ortopedia",
+        "Traumatología",
+        "Radiología",
+        "Infectología",
+        "Consultoria"
+    };
+    
+    public static String[] especializaciones = {
+        "Cardiólogo/a",
+        "Dermatólogo/a",
+        "Neurólogo/a",
+        "Oftalmólogo/a",
+        "Ginecólogo/a",
+        "Urólogo/a",
+        "Pediatra",
+        "Cirujano/a",
+        "Psiquiatra",
+        "Internista",
+        "Ortopedista",
+        "Traumatólogo/a",
+        "Radiólogo/a",
+        "Infectólogo/a",
+        "Medico General"
+    };
+    
+    public static long dayBeetwen(String date1, String date2){
+        SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
+        long diff = 0;
+        try {
+            Date d1 = df.parse(date1);
+            Date d2 = df.parse(date2);
+            diff = d1.getTime() - d2.getTime();
+            diff = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+        } catch (ParseException e) {
+        }
+        return diff;
+    }
+    
+    public static String getNextDate(String  curDate) {
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+        Calendar calendar = Calendar.getInstance();
+        try {
+            Date date = format.parse(curDate);
+            calendar.setTime(date);
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        } catch (ParseException ex) {
+            Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return format.format(calendar.getTime());
+    }
+    
+    public static int calcularPrioridad(Paciente p, Cita c){
+        int prioridadGenero = p.getGenero().equals("Mujer") ? 0 : 1;
+        int prioridadEdad = p.getEdad() <= 12 ? 0 : p.getEdad() >= 60 ? 3 : 6;
+        return c.getUrgencia() * 10 + prioridadEdad + prioridadGenero;
+    }
 }

@@ -6,18 +6,13 @@ package redhospitalaria.controlador;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.ConnectException;
-import javax.swing.AbstractAction;
-import static javax.swing.Action.MNEMONIC_KEY;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import raven.alerts.MessageAlerts;
+import redhospitalaria.modelo.Doctor;
 import redhospitalaria.modelo.Modelo;
 import redhospitalaria.modelo.UserSocket;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Paciente;
 import redhospitalaria.visual.*;
 
 /**
@@ -34,27 +29,23 @@ public class PrincipalControl implements ActionListener{
     private EliminarControl eliminarControl;
     private CrearControl crearControl;
     private ListarControl listarControl;
-    private Usuario user;
+    private CitasControl citasControl;
+    private ModificarControl modificarControl;
+    private Paciente user;
 
     public PrincipalControl() throws IOException {
         init();
     }
     
     private void init() throws IOException {
-        final CloseAction closeAction = new CloseAction(g);
-
-        g.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                closeAction.confirmClosing();
-            }
-        });
         loginControl = new LoginControl(g.getLogin(),m, this);
         drawerControl = new DrawerControl(user, g.getDm(), m, this);
         buscarControl = new BuscarControl(user, g.getBg(), m, this);
         eliminarControl = new EliminarControl(user, g.getRg(), m, this);
         crearControl = new CrearControl(g.getCu(), this, user);
         listarControl = new ListarControl(g.getLg(), this, user);
+        citasControl = new CitasControl(user, g.getCg(), m, this);
+        modificarControl = new ModificarControl(user, g.getPg(), this);
     }
 
     @Override
@@ -74,7 +65,7 @@ public class PrincipalControl implements ActionListener{
     }
     
     public void mostrarCitas(){
-        if(user.getTipo().equals("Doctor")){
+        if(user.getClass() == Doctor.class){
             g.getCg().getRemoverCita().setText("Atender Paciente");
             g.getCg().getRemoverCita().setLocation(g.getCg().getSolicitarCita().getLocation());
             g.getCg().getSolicitarCita().setVisible(false);
@@ -97,12 +88,11 @@ public class PrincipalControl implements ActionListener{
     }
     
     public void mostrarMenu(){
-        switch (user.getTipo()) {
-            case "Paciente" -> {
-                g.getDm().getcButtons()[4].setVisible(false);
-                g.getDm().getcButtons()[5].setVisible(false);
-            }
-            case "Doctor" -> g.getDm().getcButtons()[5].setVisible(false);
+        if (user.getClass() == Paciente.class) {
+            g.getDm().getcButtons()[4].setVisible(false);
+            g.getDm().getcButtons()[5].setVisible(false);
+        }else if(user.getClass() == Doctor.class){
+            g.getDm().getcButtons()[5].setVisible(false);
         }
         g.getDm().setVisible(true);
     }
@@ -119,12 +109,17 @@ public class PrincipalControl implements ActionListener{
         g.getPg().setVisible(false);
     }
 
-    public Usuario getUser() {
+    public Paciente getUser() {
         return user;
     }
 
-    public void setUser(Usuario user) {
+    public void setUser(Paciente user) {
         this.user = user;
+        modificarControl.setUser(this.user);
+        citasControl.setUser(this.user);
+        buscarControl.setUser(this.user);
+        eliminarControl.setUser(this.user);
+        drawerControl.setUser(this.user);
     }
     
     public void ocultComps(){
@@ -137,8 +132,13 @@ public class PrincipalControl implements ActionListener{
         ocultarCrear();
     }
     
-    public void setPerfil(Usuario u){
+    public void setPerfil(Paciente u){
         g.getPg().setInformacion(u);
+        if(u.getClass() == Doctor.class){
+            g.getPg().getTitle().setText("Datos - " + ((Doctor)u).getEspecializacion());
+        }else{
+            g.getPg().getTitle().setText("Datos - " + u.getClass().getSimpleName());
+        }
     }
     
     public void mostrarBuscar(){
@@ -158,7 +158,7 @@ public class PrincipalControl implements ActionListener{
     }
     
     public void mostrarCrear(){
-        if(user.getTipo().equals("Doctor")){
+        if(user.getClass() == Doctor.class){
             g.getCu().getCombo().setSelectedItem("Paciente");
             g.getCu().getCombo().setEnabled(false);
         }
@@ -177,8 +177,7 @@ public class PrincipalControl implements ActionListener{
             o = conection.getIn().readObject();
             conection.close();
         } catch (ConnectException ex) {
-        } catch (IOException ex) {
-        } catch (ClassNotFoundException ex) {
+        } catch (IOException | ClassNotFoundException ex) {
         }
         return o;
     }
@@ -192,35 +191,64 @@ public class PrincipalControl implements ActionListener{
             o = conection.getIn().readObject();
             conection.close();
         } catch (ConnectException ex) {
-        } catch (IOException ex) {
-        } catch (ClassNotFoundException ex) {
+        } catch (IOException | ClassNotFoundException ex) {
         }
         return o;
     }
     
-    private class CloseAction extends AbstractAction {
-
-        private JFrame mainFrame;
-
-        public CloseAction(JFrame mainFrame) {
-            super("Exit");
-            putValue(MNEMONIC_KEY, KeyEvent.VK_X);
-            this.mainFrame = mainFrame;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            confirmClosing();
-        }
-
-        public void confirmClosing() {
-            int confirmed = JOptionPane.showConfirmDialog(mainFrame,
-                    "Are you sure you want to quit?", "Confirm quit",
-                    JOptionPane.YES_NO_OPTION);
-            if (confirmed == JOptionPane.YES_OPTION) {
-                // clean up code
-                System.exit(0);
+    public boolean actualizar(){
+        Object o = peticion("get:" + user.getCedula());
+        if(o != null && o instanceof Boolean){
+            MessageAlerts.getInstance().
+                    showMessage("Error",
+                            "No se pudo actualizar la informacion del usuario",
+                            MessageAlerts.MessageType.ERROR);
+            if(!(Boolean)peticion("exits:" + user.getCedula())){
+                MessageAlerts.getInstance().showMessage("Lo lamentamos",
+                    "Al parecer ya no te encuentras en nuestra base de datos",
+                    MessageAlerts.MessageType.ERROR);
+                logOut();
             }
+            return false;
+        }else{
+            setUser((Paciente) o);
+            return true;
+        }
+    }
+    
+    public void setDefault(){
+        g.getBg().setDefault();
+        g.getCg().setDefault();
+        g.getDm().setVisible(false);
+        g.getRg().setDefault();
+        g.getLg().setDefault();
+        g.getPg().setDefault();
+        g.getCu().setDefault();
+        g.getLogin().setDefault();
+    }
+
+    public void logOut() {
+        setDefault();
+        ocultComps();
+        mostrarLogin();
+    }
+    
+    public void notificaciones(){
+        String notify = "";
+        if(!(notify = (String) peticion("notify:" + user.getCedula())).equals("")){
+            MessageAlerts.getInstance()
+                .showMessage("Notificacion",
+                        user.getNotify().pop() + "\nVer siguiente notificacion?",
+                        MessageAlerts.MessageType.DEFAULT, MessageAlerts.YES_NO_OPTION, (pc, i) -> {
+                                if(i == MessageAlerts.YES_OPTION){
+                                    notificaciones();
+                                }
+                            });
+        }else{
+            MessageAlerts.getInstance()
+                .showMessage("Informacion",
+                        "No hay notificaciones",
+                        MessageAlerts.MessageType.DEFAULT);
         }
     }
 }

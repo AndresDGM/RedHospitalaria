@@ -9,8 +9,9 @@ public class DrawerMenu extends JPanel{
         "Listado de citas",
         "Listar",
         "Añadir",
-        "Eliminar"
-            //,"Notificaciones"
+        "Eliminar",
+        "Actualizar",
+        "Notificaciones"
     };
     
     private BasicButton[] cButtons = new BasicButton[categories.length];
@@ -23,9 +24,8 @@ public class DrawerMenu extends JPanel{
     private int width = 40;
     private int height;
     
-    public DrawerMenu(int showWidth, int height){
+    public DrawerMenu(int height){
         this.height = height;
-        this.fullWidth = showWidth;
         initGui();
     }
     
@@ -44,6 +44,8 @@ public class DrawerMenu extends JPanel{
             cButtons[i].setColor(getBackground());
             add(cButtons[i]);
         }
+        cButtons[categories.length - 2].setLocation(0, height - 2 * width);
+        cButtons[categories.length - 1].setLocation(0, height - width);
         //add(head);
         setVisible(true);
     }

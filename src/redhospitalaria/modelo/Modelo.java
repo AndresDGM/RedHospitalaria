@@ -5,12 +5,15 @@
 package redhospitalaria.modelo;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
 import redhospitalaria.visual.DateChooserDJRaven.DateChooser;
@@ -21,10 +24,10 @@ public class Modelo {
     private final int port = 8001;
     private ServerSocket serverSocket;
     private Socket socket;
-    private HashMap<Long, Usuario> datos = new HashMap<>();
-    private String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
-    private String idRegex = "^.\\d+$";
-    private String passwordRegex = "^.{8,}$";
+    private HashMap<Long, Paciente> datos = new HashMap<>();
+    private final String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+    private final String idRegex = "^.\\d+$";
+    private final String passwordRegex = "^.{8,}$";
 
     public Modelo() throws IOException {
         serverSocket = new ServerSocket(port);
@@ -32,55 +35,90 @@ public class Modelo {
         for (int i = 0; i < 50; i++) {
             int ran = (int) (Math.random() * (Util.departamentos.length - 2) + 1);
             int ran2 = (int) (Math.random() * (Util.municipios[ran - 1].length - 2) + 1);
-            Usuario u = new Usuario(
+            Paciente u = new Doctor(
                     Util.idsPruebaDocs[i],
                     Util.nombresPruebaDoc[i],
+                    "Xd",
+                    "EPS",
                     "12345678",
-                    "Doctor",
                     Util.CorreosPruebaDocs[i],
                     Util.fechasdeNacimientoDocs[i],
                     DateChooser.getToDay(),
                     Util.departamentos[ran],
                     Util.municipios[ran - 1][ran2],
-                    Util.direccionesPrueba[i]
+                    Util.direccionesPrueba[i],
+                    Util.especializaciones[(int) (Math.random() * Util.especializaciones.length - 1)]
             );
             datos.put(u.getCedula(), u);
         }
-        datos.get(986742189L).setTipo("Administrador");
+        datos.replace(986742189L, new Administrador(datos.get(986742189L)));
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         Modelo m = new Modelo();
         while (true) {
-            Socket s;
+            UserSocket s;
             System.out.println("Esperando Peticion");
-            s = m.getServerSocket().accept();
+            s = new UserSocket(m.getServerSocket().accept());
             System.out.println("Peticion Aceptada");
-            ObjectInputStream entrada = new ObjectInputStream(s.getInputStream());
-            ObjectOutputStream salida = new ObjectOutputStream(s.getOutputStream());
-            String comando = (String) entrada.readObject();
+            String comando = (String) s.getIn().readObject();
+            System.out.println(comando);
             String peticion = comando.split(":")[0];
             switch (peticion) {
                 case "sesion" ->
-                    m.sesion(Long.valueOf(comando.split(":")[1]), comando.split(":")[2], salida);
+                    m.sesion(Long.valueOf(comando.split(":")[1]), comando.split(":")[2], s.getOut());
                 case "exits" ->
-                    m.exits(Long.valueOf(comando.split(":")[1]), salida);
+                    m.exits(Long.valueOf(comando.split(":")[1]), s.getOut());
                 case "create" -> {
-                    Usuario u = (Usuario) entrada.readObject();
+                    Paciente u = (Paciente) s.getIn().readObject();
                     if (u != null) {
                         m.getDatos().put(u.getCedula(), u);
                     }
-                    salida.writeObject(u != null);
+                    s.getOut().writeObject(u != null);
                 }
                 case "val" ->
-                    m.validation(comando.split(":")[1], comando.split(":")[2], salida);
+                    m.validation(comando.split(":")[1], comando.split(":")[2], s.getOut());
                 case "get" ->
-                    m.get(Long.parseLong(comando.split(":")[1]), salida);
+                    m.get(Long.valueOf(comando.split(":")[1]), s.getOut());
                 case "delete" ->
-                    m.delete(Long.parseLong(comando.split(":")[1]), salida);
+                    m.delete(Long.valueOf(comando.split(":")[1]), s.getOut());
                 case "list" -> {
-                    Usuario u = (Usuario) entrada.readObject();
-                    m.list(comando.split(":")[1], u, salida);
+                    Predicado<Paciente> p = (Predicado<Paciente>) s.getIn().readObject();
+                    m.list(p, s.getOut());
+                }
+                case "colums" -> {
+                    s.getOut().writeObject(new String[]{
+                            "Cedula",
+                            "Especializacion",
+                            "Nombre",
+                            "Genero",
+                            "Eps",
+                            "Edad",
+                            "Correo",
+                            "Fecha de nacimiento",
+                            "Fecha de registro",
+                            "Direccion",
+                            "Departamento",
+                            "Municipio"
+                        });
+                }
+                case "appointment" -> {
+                    if (comando.split(":")[1].equals("new")) {
+                        m.newAppoitment(Long.valueOf(comando.split(":")[2]),
+                                Integer.parseInt(comando.split(":")[3]),
+                                comando.split(":")[4],
+                                comando.split(":")[5],
+                                s.getOut());
+                    } else {
+                        m.removeAppoitment(Long.valueOf(comando.split(":")[3]), Long.valueOf(comando.split(":")[2]), s.getOut());
+                    }
+                }
+                case "modify" -> {
+                    Paciente u = (Paciente) s.getIn().readObject();
+                    m.modify(u, s.getOut());
+                }
+                case "notify" -> {
+                    m.notify(Long.valueOf(comando.split(":")[1]), s.getOut());
                 }
             }
             s.close();
@@ -96,11 +134,11 @@ public class Modelo {
         this.serverSocket = serverSocket;
     }
 
-    public HashMap<Long, Usuario> getDatos() {
+    public HashMap<Long, Paciente> getDatos() {
         return datos;
     }
 
-    public void setDatos(HashMap<Long, Usuario> datos) {
+    public void setDatos(HashMap<Long, Paciente> datos) {
         this.datos = datos;
     }
 
@@ -136,7 +174,28 @@ public class Modelo {
 
     public void delete(Long key, ObjectOutputStream out) throws IOException {
         if (datos.containsKey(key)) {
-            out.writeObject(datos.remove(key));
+            Paciente p = datos.remove(key);
+            Set<Long> keys = datos.keySet();
+            for (Long k : keys) {
+                Queue<Cita> citas = datos.get(k).getCitas();
+                Queue<Cita> temp = new LinkedList<>();
+                boolean val = false;
+                while (!citas.isEmpty()) {
+                    Cita c = citas.poll();
+                    if (!c.getPaciente().equals(p) &&
+                            p.getClass() == Doctor.class &&
+                            !c.getDoctor().equals((Doctor) p) ) {
+                        temp.offer(c);
+                    } else {
+                        val = true;
+                    }
+                }
+                if (val) {
+                    datos.get(k).getNotify().push("Su/s) cita/s con" + p.getNombre() + " " + p.getCedula() + " han sido removidas ya que este usuario ya no pertenece al sistema");
+                }
+                datos.get(k).setCitas(temp);
+            }
+            out.writeObject(p);
         } else {
             out.writeObject(false);
         }
@@ -153,21 +212,9 @@ public class Modelo {
         }
     }
 
-    public void list(String data, Usuario u, ObjectOutputStream out) throws IOException {
+    public void list(Predicado<Paciente> p, ObjectOutputStream out) throws IOException {
         ArrayList<String[]> lista = new ArrayList<>();
-        Predicate<Long> predicate = key -> false;
-        switch (data) {
-            case "doctores con mas de 10 años de experiencia" ->
-                predicate = key -> datos.get(key).getEdad() >= 33;
-            case "doctores con menos de 10 años de experiencia" ->
-                predicate = key -> datos.get(key).getEdad() < 33;
-            case "doctores en el departamento" ->
-                predicate = key -> datos.get(key).getDepartamento().equals(u.getDepartamento());
-            case "doctores en el municipio" ->
-                predicate = key -> datos.get(key).getMunicipio().equals(u.getMunicipio());
-            case "mayores de 30 años" ->
-                predicate = key -> datos.get(key).getEdad() > 30;
-        }
+        Predicate<Long> predicate = key -> p.test(datos.get(key));
         Set<Long> keys = datos.keySet();
         for (Long key : keys) {
             if (predicate.test(key)) {
@@ -175,5 +222,104 @@ public class Modelo {
             }
         }
         out.writeObject(lista);
+    }
+
+    public void newAppoitment(Long idUser, int urgencia, String area, String razon, ObjectOutputStream out) throws IOException {
+        ArrayList<Long> keys = new ArrayList<>(datos.keySet());
+        long doctorKey = -1;
+        long menor = Long.MAX_VALUE;
+        String esp = Util.especializaciones[Arrays.asList(Util.areas).indexOf(area)];
+        for (int i = 0; i < keys.size(); i++) {
+            Paciente p = datos.get(keys.get(i));
+            if (p.getClass() == Doctor.class) {
+                long diff = Util.dayBeetwen(DateChooser.getToDay(), ((Doctor) datos.get(keys.get(i))).getUltimasCitasfecha()[urgencia]);
+                if (p.getMunicipio().equals(datos.get(idUser).getMunicipio())
+                        && ((Doctor) p).getEspecializacion().equals(esp)) {
+                    if (diff < menor) {
+                        menor = diff;
+                        doctorKey = keys.get(i);
+                    }
+                } else if (((Doctor) p).getEspecializacion().equals(esp)
+                        && p.getDepartamento().equals(datos.get(idUser).getDepartamento())) {
+                    boolean val = doctorKey == -1 || !datos.get(doctorKey).getMunicipio().equals(datos.get(idUser).getMunicipio());
+                    if (diff < menor && val) {
+                        menor = diff;
+                        doctorKey = keys.get(i);
+                    }
+                } else if (((Doctor) p).getEspecializacion().equals(esp)) {
+                    boolean val = doctorKey == -1 || !datos.get(doctorKey).getDepartamento().equals(datos.get(idUser).getDepartamento());
+                    if (diff < menor && val) {
+                        menor = diff;
+                        doctorKey = keys.get(i);
+                    }
+                }
+            }
+        }
+        if (doctorKey != -1) {
+            Cita c = new Cita((Doctor) datos.get(doctorKey), datos.get(datos.get(idUser).getCedula()), "", "", area, razon, urgencia);
+            ((Doctor) datos.get(doctorKey)).agregarCita(c);
+            datos.get(doctorKey).getNotify().push("Se le ha agendado una cita con " + datos.get(datos.get(idUser).getCedula()).getNombre()
+                    + " " + datos.get(datos.get(idUser).getCedula()).getCedula() + "\nRazon: " + c.getRazon());
+            out.writeObject(datos.get(datos.get(idUser).getCedula()).agregarCita(c));
+        } else {
+            out.writeObject(false);
+        }
+    }
+
+    public void removeAppoitment(Long idUser, Long idDoctor, ObjectOutputStream out) throws IOException {
+        if (Objects.equals(idUser, idDoctor)) {
+            if (!datos.get(idDoctor).getCitas().isEmpty()) {
+                Cita cita = datos.get(idDoctor).citas.poll();
+                datos.get(idUser).getCitas().poll();
+                datos.get(idUser).incrementCitasAtendidas(1);
+                datos.get(idDoctor).incrementCitasAtendidas(1);
+                datos.get(idUser).getNotify().push("Su cita con "
+                        + ((Doctor) datos.get(idDoctor)).getNombre()
+                        + " " + ((Doctor) datos.get(idDoctor)).getEspecializacion()
+                        + " fue atendida correctamente\nRazon: " + cita.getRazon());
+
+                out.writeObject("La cita se atendio correctamente");
+            } else {
+                out.writeObject("No hay citas por el momento");
+            }
+        } else {
+            if (datos.containsKey(idDoctor)) {
+                if (!datos.get(idDoctor).getCitas().isEmpty()) {
+                    if (datos.get(idDoctor).getCitas().peek().equals(datos.get(idUser).citas.peek())) {
+                        Cita cita = datos.get(idUser).citas.poll();
+                        datos.get(idDoctor).getCitas().poll();
+                        datos.get(idUser).incrementCitasAtendidas(1);
+                        datos.get(idDoctor).incrementCitasAtendidas(1);
+                        datos.get(idDoctor).getNotify().push("Su cita con " + datos.get(idUser).getNombre()
+                                + " " + datos.get(idUser).getCedula() + " fue atendida correctamente\nRazon: " + cita.getRazon());
+                        out.writeObject("La cita se atendio correctamente");
+                    } else {
+                        out.writeObject("Todavia no es su turno");
+                    }
+                } else {
+                    out.writeObject("No hay citas por el momento");
+                }
+            } else {
+                out.writeObject("No hay citas con este doctor/a, ya que ya no pertenece al sistema");
+            }
+        }
+    }
+
+    public void modify(Paciente u, ObjectOutputStream out) throws IOException {
+        if (u.getClass() == Paciente.class) {
+            out.writeObject(datos.replace(u.getCedula(), datos.get(u.getCedula()), u));
+        } else if (u.getClass() == Doctor.class) {
+            out.writeObject(datos.replace(u.getCedula(), datos.get(u.getCedula()), (Doctor) u));
+        } else {
+            out.writeObject(datos.replace(u.getCedula(), datos.get(u.getCedula()), (Administrador) u));
+        }
+    }
+
+    public void notify(long id, ObjectOutputStream out) throws IOException {
+        if (!datos.get(id).getNotify().isEmpty()) {
+            out.writeObject(datos.get(id).getNotify().pop());
+        } else {
+            out.writeObject("");
+        }
     }
 }

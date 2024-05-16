@@ -3,6 +3,7 @@ package redhospitalaria.visual;
 import java.awt.Color;
 import java.awt.Font;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class CitasGui extends JPanel{
     
@@ -10,6 +11,8 @@ public class CitasGui extends JPanel{
     private DarkTable table;
     private BasicButton solicitarCita;
     private BasicButton removerCita;
+    private CitaForm citaCrear;
+    private JScrollPane jsp;
     
     public CitasGui() {
         initGui();
@@ -28,21 +31,23 @@ public class CitasGui extends JPanel{
         title.setForeground(Color.white);
         table = new DarkTable();
         table.setSize(getWidth(), getHeight() - 120);
-        JScrollPane jsp = new JScrollPane(table);
+        jsp = new JScrollPane(table);
         table.styleAndSetScrollPane(jsp);
         jsp.setBounds(0,50,table.getWidth(), table.getHeight());
         solicitarCita = new BasicButton(130, 40, "Solicitar cita");
         solicitarCita.setColor(new Color(65, 150, 240));
         solicitarCita.setLocation(getWidth() - 140,getHeight() - 50);
         solicitarCita.setFont(new Font("Arial", Font.PLAIN, 16));
-        removerCita = new BasicButton(130, 40, "asistir a cita");
+        removerCita = new BasicButton(130, 40, "Asistir a cita");
         removerCita.setColor(new Color(38,230,102));
         removerCita.setLocation(getWidth() - 280,getHeight() - 50);
         removerCita.setFont(new Font("Arial", Font.PLAIN, 16));
+        citaCrear = new CitaForm();
         add(solicitarCita);
         add(removerCita);
         add(title);
         add(jsp);
+        add(citaCrear);
         setVisible(true);
     }
 
@@ -68,5 +73,40 @@ public class CitasGui extends JPanel{
 
     public void setRemoverCita(BasicButton removerCita) {
         this.removerCita = removerCita;
+    }
+
+    public CitaForm getCitaCrear() {
+        return citaCrear;
+    }
+
+    public void setCitaCrear(CitaForm citaCrear) {
+        this.citaCrear = citaCrear;
+    }
+    
+    public void ocultList(){
+        jsp.setVisible(false);
+        solicitarCita.setVisible(false);
+        removerCita.setVisible(false);
+    }
+    
+    public void showList(){
+        jsp.setVisible(true);
+        solicitarCita.setVisible(true);
+        removerCita.setVisible(true);
+    }
+
+    public JScrollPane getJsp() {
+        return jsp;
+    }
+    
+    public void setDefault(){
+        table.setModel(new DefaultTableModel());
+        jsp.setVisible(true);
+        citaCrear.setVisible(false);
+        citaCrear.setDefault();
+        citaCrear.getRazon().setText("");
+        citaCrear.getUrgencia().setSelectedIndex(0);
+        citaCrear.getArea().setSelectedIndex(0);
+        showList();
     }
 }

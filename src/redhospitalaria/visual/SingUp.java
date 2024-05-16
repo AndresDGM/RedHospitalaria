@@ -21,10 +21,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import redhospitalaria.visual.DateChooserDJRaven.DateChooser;
 
-/**
- *
- * @author david
- */
 public class SingUp extends JPanel {
 
     private GuiLogin g;
@@ -51,10 +47,16 @@ public class SingUp extends JPanel {
     private JLabel msgS3;
     private ComboBox<String> depar;
     private ComboBox<String> muni;
-    private TextField direccion;
     private JLabel deparLabel;
     private JLabel muniLabel;
     private JLabel dirLabel;
+    private ComboBox<String> eps;
+    private ComboBox<String> genero;
+    private ComboBox<String> especializacion;
+    private JLabel epsLabel;
+    private JLabel generoLabel;
+    private JLabel especializacionLabel;
+    private TextField direccion;
     private JLabel[] warnings = new JLabel[3];
     private Image logo = new ImageIcon("src/images/MingcuteUserAdd2Fill.png").getImage();
     private float alpha = 1f;
@@ -154,7 +156,7 @@ public class SingUp extends JPanel {
         deparLabel.setForeground(Color.WHITE);
         deparLabel.setVisible(false);
         depar = new ComboBox<>(Util.departamentos);
-        depar.setBounds(125, 190, 400, 30);
+        depar.setBounds(125, 190, 400, 40);
         depar.addPopupMenuListener(new PopupMenuListener() {
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -202,7 +204,7 @@ public class SingUp extends JPanel {
         muniLabel.setForeground(Color.WHITE);
         muniLabel.setVisible(false);
         muni = new ComboBox<>();
-        muni.setBounds(125, 300, 400, 30);
+        muni.setBounds(125, 300, 400, 40);
         muni.setEnabled(false);
         muni.setVisible(false);
 
@@ -216,6 +218,45 @@ public class SingUp extends JPanel {
         direccion = new TextField("Tu direccion");
         direccion.setLocation(125, 410);
         direccion.setVisible(false);
+        
+        generoLabel = new JLabel("Genero");
+        //generoLabel.setBounds(125, 160, 300, 100);
+        generoLabel.setBounds(125, 120, 300, 100);
+        generoLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        generoLabel.setHorizontalAlignment(JLabel.LEFT);
+        generoLabel.setVerticalAlignment(JLabel.CENTER);
+        generoLabel.setForeground(Color.WHITE);
+        generoLabel.setVisible(false);
+        String[] generos = {"Mujer", "Hombre", "Otros"};
+        genero = new ComboBox<>(generos);
+        //genero.setBounds(125, 230, 400, 40);
+        genero.setBounds(125, 190, 400, 40);
+        genero.setVisible(false);
+        
+        epsLabel = new JLabel("Eps");
+        //epsLabel.setBounds(125, 270, 300, 100);
+        epsLabel.setBounds(125, 230, 300, 100);
+        epsLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        epsLabel.setHorizontalAlignment(JLabel.LEFT);
+        epsLabel.setVerticalAlignment(JLabel.CENTER);
+        epsLabel.setForeground(Color.WHITE);
+        epsLabel.setVisible(false);
+        String[] epsItems = {"Emssanar", "Sanitas", "SOS", "salud total", "Sura"};
+        eps = new ComboBox<>(epsItems);
+        //eps.setBounds(125, 340, 400, 40);
+        eps.setBounds(125, 300, 400, 40);
+        eps.setVisible(false);
+        
+        especializacionLabel = new JLabel("Especializacion");
+        especializacionLabel.setBounds(125, 340, 300, 100);
+        especializacionLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        especializacionLabel.setHorizontalAlignment(JLabel.LEFT);
+        especializacionLabel.setVerticalAlignment(JLabel.CENTER);
+        especializacionLabel.setForeground(Color.WHITE);
+        especializacionLabel.setVisible(false);
+        especializacion = new ComboBox<>(Util.especializaciones);
+        especializacion.setBounds(125, 410, 400, 40);
+        especializacion.setVisible(false);
 
         msgS1 = new JLabel();
         msgS1.setText("Nuevo Afiliado?");
@@ -300,6 +341,12 @@ public class SingUp extends JPanel {
         add(muni);
         add(dirLabel);
         add(direccion);
+        add(generoLabel);
+        add(genero);
+        add(epsLabel);
+        add(eps);
+        add(especializacionLabel);
+        add(especializacion);
         add(msgS1);
         add(msgS2);
         add(msgS3);
@@ -318,8 +365,9 @@ public class SingUp extends JPanel {
     }
 
     public ArrayList<Component> getComps2() {
-        if (mode == 1) {
-            return new ArrayList<>(Arrays.asList(
+        ArrayList<Component> list = null;
+        switch (mode) {
+            case 1 -> list = new ArrayList<>(Arrays.asList(
                     nombre,
                     nombreLabel,
                     fechaLabel,
@@ -329,8 +377,7 @@ public class SingUp extends JPanel {
                     fechaBoton,
                     msgS3,
                     botonSiguiente));
-        } else if (mode == 2) {
-            return new ArrayList<>(Arrays.asList(
+            case 2 -> list = new ArrayList<>(Arrays.asList(
                     dirLabel,
                     direccion,
                     muni,
@@ -340,8 +387,15 @@ public class SingUp extends JPanel {
                     botonAtras,
                     botonSiguiente,
                     msgS3));
-        } else {
-            return new ArrayList<>(Arrays.asList(
+            case 3 -> list = new ArrayList<>(Arrays.asList(
+                    genero,
+                    generoLabel,
+                    eps,
+                    epsLabel,
+                    botonAtras,
+                    botonSingUp,
+                    msgS3));
+            default -> list = new ArrayList<>(Arrays.asList(
                     correo,
                     correoLabel,
                     passLabel,
@@ -351,7 +405,8 @@ public class SingUp extends JPanel {
                     botonAtras,
                     botonSingUp,
                     msgS3));
-        }
+        };
+        return list;
     }
 
     @Override
@@ -380,21 +435,25 @@ public class SingUp extends JPanel {
         fechaLabel.setVisible(mode == 1);
         fechaBoton.setVisible(mode == 1);
         fechatxt.setVisible(mode == 1);
-        botonSiguiente.setVisible(mode == 1 || mode == 2);
+        botonSiguiente.setVisible(mode == 1 || mode == 2 || mode == 3);
         dirLabel.setVisible(mode == 2);
         direccion.setVisible(mode == 2);
         muni.setVisible(mode == 2);
         muniLabel.setVisible(mode == 2);
         depar.setVisible(mode == 2);
         deparLabel.setVisible(mode == 2);
-        botonAtras.setVisible(mode == 2 || mode == 3);
-        correoLabel.setVisible(mode == 3);
-        correo.setVisible(mode == 3);
-        passLabel.setVisible(mode == 3);
-        password.setVisible(mode == 3);
-        pSUComfirmL.setVisible(mode == 3);
-        password2.setVisible(mode == 3);
-        botonSingUp.setVisible(mode == 3);
+        generoLabel.setVisible(mode == 3);
+        genero.setVisible(mode == 3);
+        epsLabel.setVisible(mode == 3);
+        eps.setVisible(mode == 3);
+        botonAtras.setVisible(mode == 2 || mode == 3 || mode == 4);
+        correoLabel.setVisible(mode == 4);
+        correo.setVisible(mode == 4);
+        passLabel.setVisible(mode == 4);
+        password.setVisible(mode == 4);
+        pSUComfirmL.setVisible(mode == 4);
+        password2.setVisible(mode == 4);
+        botonSingUp.setVisible(mode == 4);
         for (JLabel warning : warnings) {
             warning.setVisible(false);
         }
@@ -406,9 +465,12 @@ public class SingUp extends JPanel {
         nombre.setText("");
         fechatxt.setText("");
         direccion.setText("");
-        depar.setSelectedItem("");
+        depar.setSelectedIndex(0);
         muni.removeAllItems();
         muni.setEnabled(false);
+        genero.setSelectedIndex(0);
+        eps.setSelectedIndex(0);
+        especializacion.setSelectedIndex(0);
         correo.setText("");
         password.setText("");
         password2.setText("");
@@ -553,4 +615,22 @@ public class SingUp extends JPanel {
     public void setLogo(Image logo) {
         this.logo = logo;
     }
+
+    public ComboBox<String> getEps() {
+        return eps;
+    }
+
+    public ComboBox<String> getGenero() {
+        return genero;
+    }
+
+    public ComboBox<String> getEspecializacion() {
+        return especializacion;
+    }
+
+    public JLabel getEspecializacionLabel() {
+        return especializacionLabel;
+    }
+    
+    
 }

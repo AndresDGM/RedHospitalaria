@@ -6,11 +6,10 @@ package redhospitalaria.visual;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import redhospitalaria.modelo.Usuario;
+import redhospitalaria.modelo.Doctor;
+import redhospitalaria.modelo.Paciente;
 
 public class BuscarGui extends JPanel {
 
@@ -24,10 +23,10 @@ public class BuscarGui extends JPanel {
         setLocation(pg.getX(), pg.getY());
         setLayout(null);
         setBackground(pg.getBackground());
-        pg.setSize(pg.getWidth(), pg.getHeight() - 70);
-        pg.setLocation(0, 100);
-        pg.getTitle().setLocation(30, pg.getTitle().getY() - 10);
+        pg.getTitle().setBounds(30, pg.getTitle().getY() + 35, 200 ,pg.getTitle().getHeight());
+        pg.getTitle().setFont(new Font("Arial", Font.PLAIN, 20));
         pg.getTitle().setHorizontalAlignment(JLabel.LEFT);
+        pg.setLocation(0, 30);
         title = new JLabel("Buscar");
         title.setBounds(getWidth() / 2 - 50, 10, 100, 40);
         title.setFont(new Font("Roboto", Font.PLAIN, 24));
@@ -42,9 +41,9 @@ public class BuscarGui extends JPanel {
         boton.setLocation(buscar.getX() + buscar.getWidth() + 5, 50);
         boton.setIcon("src/images/WhhFindfriends.png");
         add(buscar);
-        add(pg);
         add(title);
         add(boton);
+        add(pg);
     }
 
     public BasicButton getBoton() {
@@ -55,9 +54,14 @@ public class BuscarGui extends JPanel {
         this.boton = boton;
     }
 
-    public void setInfo(Usuario u) {
+    public void setInfo(Paciente u) {
         pg.setInformacion(u);
-        pg.getTitle().setText("Datos - " + u.getTipo());
+        
+        if(u.getClass() == Doctor.class){
+            pg.getTitle().setText("Datos - " + ((Doctor)u).getEspecializacion());
+        }else{
+            pg.getTitle().setText("Datos - " + u.getClass().getSimpleName());
+        }
     }
 
     public JLabel getTitle() {
@@ -74,5 +78,14 @@ public class BuscarGui extends JPanel {
 
     public void setBuscar(TextField buscar) {
         this.buscar = buscar;
+    }
+
+    public PerfilGui getPg() {
+        return pg;
+    }
+    
+    public void setDefault(){
+        pg.setDefault();
+        buscar.setText("");
     }
 }

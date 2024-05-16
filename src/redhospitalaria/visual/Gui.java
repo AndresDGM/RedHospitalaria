@@ -1,8 +1,6 @@
 package redhospitalaria.visual;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import java.awt.Color;
-import java.awt.Font;
 import javax.swing.*;
 import raven.popup.GlassPanePopup;
 
@@ -14,7 +12,7 @@ public class Gui extends JFrame {
     private ListadosGui lg;
     private PerfilGui pg;
     private BuscarGui bg;
-    private BuscarGui rg;
+    private RemoverGui rg;
     private CrearUsusario cu;
 
     public Gui() {
@@ -27,12 +25,12 @@ public class Gui extends JFrame {
         setIconImage(new ImageIcon("src/images/edificio-hospitalario.png").getImage());
         setLocationRelativeTo(null);
         setResizable(false);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(null);
         FlatDarkLaf.setup();
         GlassPanePopup.install(this);
         login = new GuiLogin();
-        dm = new DrawerMenu(100, getHeight());
+        dm = new DrawerMenu(600);
         dm.setVisible(false);
         cg = new CitasGui();
         cg.setVisible(false);
@@ -42,18 +40,9 @@ public class Gui extends JFrame {
         pg.setVisible(false);
         bg = new BuscarGui();
         bg.setVisible(false);
-        rg = new BuscarGui();
-        rg.setVisible(false);
-        rg.getTitle().setText("Eliminar");
-        BasicButton b = new BasicButton(100, 30, "Eliminar");
-        b.setLocation(rg.getBoton().getX(), rg.getBoton().getY());
-        b.setColor(new Color(255, 80, 85));
-        b.getTextF().setFont(new Font("arial", Font.PLAIN, 18));
-        rg.getBoton().setLocation(rg.getBoton().getX() - 50, rg.getBoton().getY());
-        rg.getBuscar().setLocation(rg.getBuscar().getX() - 50, rg.getBuscar().getY());
-        rg.add(b);
         cu = new CrearUsusario();
         cu.setVisible(false);
+        rg = new RemoverGui();
         add(login);
         add(cg);
         add(lg);
@@ -105,12 +94,11 @@ public class Gui extends JFrame {
         this.cu = cu;
     }
 
-    public BuscarGui getRg() {
+    public RemoverGui getRg() {
         return rg;
     }
 
-    public void setRg(BuscarGui rg) {
+    public void setRg(RemoverGui rg) {
         this.rg = rg;
     }
-
 }
