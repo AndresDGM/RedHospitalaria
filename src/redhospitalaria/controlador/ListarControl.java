@@ -3,7 +3,6 @@ package redhospitalaria.controlador;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.swing.DefaultComboBoxModel;
@@ -27,8 +26,6 @@ public class ListarControl implements ActionListener {
     private ListadosGui lg;
     private PrincipalControl mainControl;
     private Paciente user;
-    private BasicButton modificar;
-    private BasicButton restablecer;
 
     public ListarControl(ListadosGui lg, PrincipalControl mainControl, Paciente user) {
         this.lg = lg;
@@ -40,21 +37,29 @@ public class ListarControl implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == lg.getLista()) {
-            lg.getTable().setVisible(true);
+            lg.getJsp().setVisible(true);
+            lg.getPanelGraficos().setVisible(false);
         }
 
         if (e.getSource() == lg.getLimpiar()) {
+            lg.getJsp().setVisible(true);
             lg.getTable().setModel(new DefaultTableModel(lg.colums, 0));
             lg.getBox().setSelectedIndex(0);
+            lg.getOpcion1().setVisible(false);
+            lg.getOpcion2().setVisible(false);
+            lg.getOpcion3().setVisible(false);
+            lg.getPieDataset().setValue("Usuarios encontrados", 0);
+            lg.getPieDataset().setValue("Usuarios descartados", 0);
+            lg.getPanelGraficos().setVisible(false);
             comboFunc();
         }
 
         if (e.getSource() == lg.getListar()) {
             if (!((String) lg.getBox().getSelectedItem()).equals("Seleccionar") && 
-                    (lg.getOpcion1().getSelectedIndex() != -1 &&
+                    ((lg.getOpcion1().getSelectedIndex() != -1 &&
                     lg.getOpcion2().getSelectedIndex() != -1 &&
                     lg.getOpcion3().getSelectedIndex() != -1) ||
-                    lg.getBox().getSelectedIndex() <= 5 && lg.getBox().getSelectedIndex() > 0) {
+                    lg.getBox().getSelectedIndex() <= 5 && lg.getBox().getSelectedIndex() > 0)) {
                 listarFunc();
             } else {
                 MessageAlerts.getInstance()
@@ -65,7 +70,8 @@ public class ListarControl implements ActionListener {
         }
 
         if (e.getSource() == lg.getGraficos()) {
-            lg.getTable().setVisible(false);
+            lg.getJsp().setVisible(false);
+            lg.getPanelGraficos().setVisible(true);
         }
     }
 
@@ -93,8 +99,19 @@ public class ListarControl implements ActionListener {
 
     private void listarFunc() {
         user = mainControl.getUser();
-        String[] colums = (String[]) mainControl.peticion("colums");
-        ArrayList<String[]> rows = (ArrayList<String[]>) mainControl.peticion("list", getPredicate(lg.getBox().getSelectedIndex()));
+        ArrayList<String[]> rows = (ArrayList<String[]>) mainControl.peticion("list",
+                getPredicate(lg.getBox().getSelectedIndex()));
+        int cant = (Integer) mainControl.peticion("cont",
+                getPredicate(lg.getBox().getSelectedIndex()));
+        int total = 0;
+        if(lg.getBox().getSelectedIndex() < 7){
+            total = (Integer) mainControl.peticion("cant:doctors");
+        }else{
+            total = (Integer) mainControl.peticion("cant:all");
+        }
+        
+        lg.getPieDataset().setValue("Usuarios encontrados", cant);
+        lg.getPieDataset().setValue("Usuarios descartados", total - cant);
         String[][] lista = {{}};
         if (!rows.isEmpty()) {
             lista = new String[rows.size()][rows.get(0).length];
@@ -103,7 +120,7 @@ public class ListarControl implements ActionListener {
             }
         }
 
-        DefaultTableModel dtm = new DefaultTableModel(lista, colums) {
+        DefaultTableModel dtm = new DefaultTableModel(lista, lg.colums) {
             @Override
             public boolean isCellEditable(int rowIndex, int colIndex) {
                 return false;
@@ -297,6 +314,7 @@ public class ListarControl implements ActionListener {
                     });
                     lg.getOpcion2().removeItemAt(0);
                     lg.getOpcion3().setModel(new DefaultComboBoxModel<String>(Util.municipios[0]));
+                    lg.getOpcion3().removeItemAt(0);
                 }
                 case 9 -> {
                     lg.getOpcion1().setModel(new DefaultComboBoxModel<String>(Util.epsItems));
@@ -338,6 +356,7 @@ public class ListarControl implements ActionListener {
                     });
                     lg.getOpcion2().removeItemAt(0);
                     lg.getOpcion3().setModel(new DefaultComboBoxModel<String>(Util.municipios[0]));
+                    lg.getOpcion3().removeItemAt(0);
                 }
                 case 12 -> {
                     lg.getOpcion1().setModel(new DefaultComboBoxModel<String>(edad));

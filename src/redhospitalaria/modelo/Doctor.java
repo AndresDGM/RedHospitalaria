@@ -58,6 +58,13 @@ public class Doctor extends Paciente {
     public void setUltimasCitasfecha(String[] ultimasCitasfecha) {
         this.ultimasCitasfecha = ultimasCitasfecha;
     }
+    
+    @Override
+    public String[] getData(){
+        String[] arr = super.getData();
+        arr[1] = especializacion;
+        return arr;
+    }
 
     @Override
     public boolean agregarCita(Cita date) {

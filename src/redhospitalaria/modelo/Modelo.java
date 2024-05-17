@@ -86,21 +86,16 @@ public class Modelo {
                     Predicado<Paciente> p = (Predicado<Paciente>) s.getIn().readObject();
                     m.list(p, s.getOut());
                 }
-                case "colums" -> {
-                    s.getOut().writeObject(new String[]{
-                            "Cedula",
-                            "Especializacion",
-                            "Nombre",
-                            "Genero",
-                            "Eps",
-                            "Edad",
-                            "Correo",
-                            "Fecha de nacimiento",
-                            "Fecha de registro",
-                            "Direccion",
-                            "Departamento",
-                            "Municipio"
-                        });
+                case "cont"->{
+                    Predicado<Paciente> p = (Predicado<Paciente>) s.getIn().readObject();
+                    s.getOut().writeObject(m.cont(p));
+                }
+                case "cant" ->{
+                    if(comando.split(":")[1].equals("all")){
+                        s.getOut().writeObject(m.cant());
+                    }else{
+                        s.getOut().writeObject(m.getCantDoctors());
+                    }
                 }
                 case "appointment" -> {
                     if (comando.split(":")[1].equals("new")) {
@@ -214,14 +209,39 @@ public class Modelo {
 
     public void list(Predicado<Paciente> p, ObjectOutputStream out) throws IOException {
         ArrayList<String[]> lista = new ArrayList<>();
-        Predicate<Long> predicate = key -> p.test(datos.get(key));
         Set<Long> keys = datos.keySet();
         for (Long key : keys) {
-            if (predicate.test(key)) {
+            if (p.test(datos.get(key))) {
                 lista.add(datos.get(key).getData());
             }
         }
         out.writeObject(lista);
+    }
+    
+    public int cont(Predicado<Paciente> p) throws IOException {
+        int cont = 0;
+        Set<Long> keys = datos.keySet();
+        for (Long key : keys) {
+            if (p.test(datos.get(key))) {
+                cont++;
+            }
+        }
+        return cont;
+    }
+    
+    public int getCantDoctors(){
+        int cont = 0;
+        Set<Long> keys = datos.keySet();
+        for (Long key : keys) {
+            if (datos.get(key).getClass() == Doctor.class) {
+                cont++;
+            }
+        }
+        return cont;
+    }
+    
+    public int cant(){
+        return datos.size();
     }
 
     public void newAppoitment(Long idUser, int urgencia, String area, String razon, ObjectOutputStream out) throws IOException {

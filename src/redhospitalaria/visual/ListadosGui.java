@@ -6,12 +6,27 @@ package redhospitalaria.visual;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Paint;
+import java.awt.PaintContext;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.ColorModel;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 import javax.swing.table.DefaultTableModel;
+import org.jfree.chart.ChartColor;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.block.BlockBorder;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.Plot;
+import org.jfree.data.general.DefaultPieDataset;
 
 /**
  *
@@ -28,8 +43,15 @@ public class ListadosGui extends JPanel{
     private ComboBox<String> opcion1;
     private ComboBox<String> opcion2;
     private ComboBox<String> opcion3;
+    private DefaultPieDataset pieDataset;
+    private JPanel panelGraficos;
+    private ChartPanel chartPanel;
+    private JScrollPane jsp;
+
+    private JFreeChart pieChart;
     public final String[] colums = {
                 "Cedula",
+                "Especializacion",
                 "Nombre",
                 "Genero",
                 "Eps",
@@ -60,7 +82,7 @@ public class ListadosGui extends JPanel{
         table = new DarkTable();
         table.setSize(getWidth(), getHeight() - 200);
         table.setModel(new DefaultTableModel(colums,0));
-        JScrollPane jsp = new JScrollPane(table);
+        jsp = new JScrollPane(table);
         table.styleAndSetScrollPane(jsp);
         jsp.setBounds(0,140,table.getWidth(), table.getHeight());
         box = new ComboBox<>(new String[]{
@@ -108,6 +130,37 @@ public class ListadosGui extends JPanel{
         opcion1.setVisible(false);
         opcion2.setVisible(false);
         opcion3.setVisible(false);
+        panelGraficos = new JPanel();
+        panelGraficos.setSize(getWidth(), 420);
+        panelGraficos.setLocation(0, 130);
+        panelGraficos.setBackground(getBackground());
+        pieDataset = new DefaultPieDataset();
+        pieDataset.setValue("Usuarios encontrados", 0);
+        pieDataset.setValue("Usuarios descartados", 0);
+        pieChart = ChartFactory.createPieChart(
+                    "",
+                    pieDataset,
+                    true,
+                    true,
+                    false);
+        pieChart.setBackgroundPaint(getBackground());
+        pieChart.getLegend().setBackgroundPaint(getBackground());
+        pieChart.getLegend().setItemPaint(Color.WHITE);
+        pieChart.getLegend().setFrame(BlockBorder.NONE);
+        pieChart.getLegend().setItemFont(new Font("Arial", Font.PLAIN, 16));
+        PiePlot plot = (PiePlot) pieChart.getPlot();
+        plot.setSectionPaint("Usuarios encontrados", new Color(22, 219, 144));
+        plot.setBackgroundPaint(getBackground());
+        plot.setLabelBackgroundPaint(Color.white);
+        plot.setLabelFont(new Font("Arial", Font.PLAIN, 13));
+        plot.setOutlinePaint(null);
+        plot.setShadowXOffset(0);
+        plot.setShadowYOffset(0);
+        chartPanel = new ChartPanel(pieChart);
+        chartPanel.setBackground(getBackground());
+        panelGraficos.add(chartPanel);
+        //panelGraficos.setVisible(false);
+        add(panelGraficos);
         add(listar);
         add(limpiar);
         add(title);
@@ -197,6 +250,30 @@ public class ListadosGui extends JPanel{
     public void setOpcion3(ComboBox<String> opcion3) {
         this.opcion3 = opcion3;
     }
+
+    public JFreeChart getPieChart() {
+        return pieChart;
+    }
+
+    public DefaultPieDataset getPieDataset() {
+        return pieDataset;
+    }
+
+    public JLabel getTitle() {
+        return title;
+    }
+
+    public JPanel getPanelGraficos() {
+        return panelGraficos;
+    }
+
+    public ChartPanel getChartPanel() {
+        return chartPanel;
+    }
+
+    public JScrollPane getJsp() {
+        return jsp;
+    }
     
     public static void main(String[] args) {
         JFrame f = new JFrame("Sus");
@@ -209,4 +286,6 @@ public class ListadosGui extends JPanel{
         f.add(l);
         f.setVisible(true);
     }
+    
+    
 }
